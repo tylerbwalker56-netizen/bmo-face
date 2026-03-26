@@ -1,0 +1,31 @@
+# Secrets — never commit these
+pip_brain_config.json
+cosmo_config.json
+pip_config.json
+
+# Runtime data (generated locally)
+pip_personality.json
+pip_memory.json
+pip_conversations.json
+pip_interests.json
+pip_news_cache.json
+pip_sleep_log.json
+
+# Pokemon ROM
+pokemon/*.gb
+pokemon/*.gbc
+
+# Trained models (too big for git)
+pokemon/models/
+pokemon/logs/
+pokemon/pip_stats.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db
