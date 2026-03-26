@@ -25,7 +25,15 @@ try:
 except ImportError:
     HAS_OPENAI = False
 
-API_KEY = ""  # Set your OpenAI API key here or in pip_brain_config.json
+# Load API key from config file
+API_KEY = ""
+_config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "pip_brain_config.json")
+if os.path.exists(_config_path):
+    try:
+        with open(_config_path) as _f:
+            API_KEY = json.load(_f).get("api_key", "")
+    except:
+        pass
 CHATGPT_MODEL = "gpt-4o-mini"
 OLLAMA_MODEL = "llama3.2"  # Change this to whatever model you download in Ollama
 OLLAMA_URL = "http://localhost:11434"
