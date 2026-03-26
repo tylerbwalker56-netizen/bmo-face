@@ -3,8 +3,21 @@
 
 ---
 
-## 🖥️ Run Pip's Face (Windows Desktop)
+## 🖥️ Run Pip — Unified App (Face + Chat + Pokemon!)
 
+```
+cd C:\Users\tyler\Desktop\bmo-face-main
+C:\Users\tyler\AppData\Local\Programs\Python\Python314\python.exe pip_unified.py
+```
+
+### Controls:
+- **F1** or type `/game` → Switch to Pokemon mode (Pip plays by itself!)
+- **F2** or type `/face` or `/chat` → Switch back to chat mode
+- `/stats` → See Pip's Pokemon learning progress
+- `/help` → Show all commands
+- **Esc** → Quit
+
+### Old face-only version (no Pokemon):
 ```
 cd C:\Users\tyler\Desktop\bmo-face-main
 C:\Users\tyler\AppData\Local\Programs\Python\Python314\python.exe pip_desktop.py
@@ -110,7 +123,8 @@ python3 pip_desktop.py
 ## 📁 Important Files
 | File | What it does |
 |------|-------------|
-| `pip_desktop.py` | Pip's face + chat (runs on PC or Pi) |
+| `pip_unified.py` | Pip's face + chat + Pokemon ALL IN ONE |
+| `pip_desktop.py` | Pip's face + chat only (no Pokemon) |
 | `pip_brain_config.json` | Your OpenAI API key (keep secret!) |
 | `pokemon/pokemon_player.py` | Pokémon AI player |
 | `setup_pi.sh` | One-shot Pi setup script |
