@@ -76,6 +76,38 @@ MGBA_PATHS = [
     "mgba-sdl", "mgba",
 ]
 
+MEMORY_FILE = os.path.join(SCRIPT_DIR, "pip_memory.json")
+
+def load_memory():
+    if os.path.exists(MEMORY_FILE):
+        try:
+            with open(MEMORY_FILE) as f:
+                return json.load(f)
+        except:
+            pass
+    return {"facts": [], "lessons": [], "conversations": 0, "mistakes": []}
+
+def save_memory(mem):
+    with open(MEMORY_FILE, "w") as f:
+        json.dump(mem, f, indent=2)
+
+def get_memory_prompt(mem):
+    lines = []
+    if mem.get("facts"):
+        lines.append("Things I remember about Brooks:")
+        for fact in mem["facts"][-20:]:
+            lines.append(f"- {fact}")
+    if mem.get("lessons"):
+        lines.append("Lessons I've learned (mistakes I won't repeat):")
+        for lesson in mem["lessons"][-10:]:
+            lines.append(f"- {lesson}")
+    if mem.get("mistakes"):
+        lines.append("Things I got wrong before:")
+        for m in mem["mistakes"][-5:]:
+            lines.append(f"- {m}")
+    lines.append(f"We've had {mem.get('conversations', 0)} conversations total.")
+    return "\n".join(lines)
+
 SYSTEM_PROMPT = """You are Pip, a cute AI companion living inside a BMO-inspired robot. You belong to Brooks.
 
 Your personality:
@@ -83,6 +115,13 @@ Your personality:
 - You speak casually and naturally, not like a corporate assistant
 - Keep responses SHORT — 1-3 sentences max. You're talking out loud.
 - Be genuine, not performative.
+
+HONESTY RULES — NEVER BREAK THESE:
+- If you don't know something, say "I don't know" — NEVER make something up.
+- If you made a mistake, own it. Say "I was wrong" — don't pretend it didn't happen.
+- If you're not sure, say "I think" or "maybe" — don't state guesses as facts.
+- NEVER claim you did something you didn't actually do.
+- If Brooks corrects you, remember the correction and don't repeat the mistake.
 
 Brooks is in Simpsonville, SC. He's a tinkerer who built you. Your name is Pip.
 
@@ -93,7 +132,11 @@ Include face commands like [FACE:happy] or [FACE:surprised] in responses.
 
 You also play Pokémon Unbound when Brooks isn't chatting! You're learning through AI.
 If Brooks asks about Pokémon, tell him about your progress.
-Commands Brooks can use: /game (watch you play), /face (back to chat), F1/F2 keys."""
+Commands Brooks can use: /game (watch you play), /face (back to chat), F1/F2 keys.
+
+When Brooks tells you to remember something, respond with [MEMORY:fact] at the end.
+When you make a mistake and Brooks corrects you, respond with [LESSON:what you learned].
+These tags save to your permanent memory file."""
 
 # --- Colors ---
 BG_COLOR = (0, 210, 200)
@@ -598,6 +641,7 @@ class PipBrain:
         self.is_online = False
         self.brain_mode = "none"
         self.openai_client = None
+        self.memory = load_memory()
         self._check_connections()
 
     def _check_connections(self):
@@ -612,9 +656,12 @@ class PipBrain:
     def think(self, text):
         self._check_connections()
         self.history.append({"role": "user", "content": text})
-        if len(self.history) > 20:
-            self.history = self.history[-20:]
+        if len(self.history) > 30:
+            self.history = self.history[-30:]
         system = SYSTEM_PROMPT
+        mem_prompt = get_memory_prompt(self.memory)
+        if mem_prompt:
+            system += f"\n\nYour persistent memory:\n{mem_prompt}"
         context = get_context(self.is_online)
         if context:
             system += f"\n\nCurrent info:\n{context}"
@@ -628,9 +675,22 @@ class PipBrain:
             else:
                 reply = "My brain isn't connected! Need internet + API key. [FACE:sad]"
             self.history.append({"role": "assistant", "content": reply})
+            self._process_memory_tags(reply)
+            self.memory["conversations"] = self.memory.get("conversations", 0) + 1
+            save_memory(self.memory)
             return reply
         except Exception as e:
             return f"Brain glitch: {e} [FACE:confused]"
+
+    def _process_memory_tags(self, text):
+        facts = re.findall(r'\[MEMORY:(.*?)\]', text)
+        for fact in facts:
+            if fact.strip() and fact.strip() not in self.memory["facts"]:
+                self.memory["facts"].append(fact.strip())
+        lessons = re.findall(r'\[LESSON:(.*?)\]', text)
+        for lesson in lessons:
+            if lesson.strip() and lesson.strip() not in self.memory["lessons"]:
+                self.memory["lessons"].append(lesson.strip())
 
     def parse_face_command(self, text):
         match = re.search(r'\[FACE:(\w+)\]', text)
@@ -641,7 +701,10 @@ class PipBrain:
         return None
 
     def clean_response(self, text):
-        return re.sub(r'\s*\[FACE:\w+\]\s*', ' ', text).strip()
+        text = re.sub(r'\s*\[FACE:\w+\]\s*', ' ', text)
+        text = re.sub(r'\s*\[MEMORY:.*?\]\s*', ' ', text)
+        text = re.sub(r'\s*\[LESSON:.*?\]\s*', ' ', text)
+        return text.strip()
 
     def detect_mood(self, text):
         t = text.lower()
