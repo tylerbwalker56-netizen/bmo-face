@@ -50,9 +50,11 @@ BRAIN_FILE = os.path.join(SCRIPT_DIR, "pip_pokemon_brain.json")
 
 # mGBA path — auto-detect or set manually
 MGBA_PATHS = [
-    "mgba-sdl",                          # Linux (in PATH)
-    "mgba",                               # Linux alt
-    r"C:\Program Files\mGBA\mGBA.exe",   # Windows default
+    os.path.join(SCRIPT_DIR, "..", "mGBA.exe"),          # bmo-face/mGBA.exe
+    os.path.join(SCRIPT_DIR, "mGBA.exe"),                # pokemon/mGBA.exe
+    "mgba-sdl",                                           # Linux (in PATH)
+    "mgba",                                                # Linux alt
+    r"C:\Program Files\mGBA\mGBA.exe",                   # Windows default
     r"C:\Program Files (x86)\mGBA\mGBA.exe",
     os.path.expanduser("~/mGBA/mGBA.exe"),
 ]
